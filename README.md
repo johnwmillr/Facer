@@ -2,7 +2,7 @@
 
 Python package for simple face detection, alignment, and averaging using `OpenCV` and `dlib`.
 
-This package draws heavily on [this tutorial](https://www.learnopencv.com/average-face-opencv-c-python-tutorial/) from [Satya Mallick](https://www.linkedin.com/in/satyamallick/). I had to update the code pretty heavily to get the project to work, so I thought I'd share my modifications.
+This package draws heavily on [this tutorial](https://www.learnopencv.com/average-face-opencv-c-python-tutorial/) from [Satya Mallick](https://github.com/spmallick). I had to update the code pretty heavily to get the project to work, so I thought I'd share my modifications.
 
 # Installation
 You have my 100%, money-back guarantee, that the most difficult part of using this package is installing the requirements. Once you've got `OpenCV` and `dlib` installed, the rest will be smooth sailing.
