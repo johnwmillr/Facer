@@ -54,7 +54,7 @@ def load_images(root, verbose=True):
     files = glob_image_files(root)
     num_files = len(files)
     if verbose:
-        print(f"Found {num_files} in '{root}'.")
+        print(f"\nFound {num_files} in '{root}'.")
         N = max(round(0.10 * num_files), 1)
 
     # Load the images
@@ -99,8 +99,8 @@ def detect_face_landmarks(images, save_landmarks=True, max_faces=1, verbose=True
     """
     num_images = len(images.keys())
     if verbose:
-        print(f"Starting face landmark detection...")
-        print(f"Processing {num_images}.")
+        print(f"\nStarting face landmark detection...")
+        print(f"Processing {num_images} images.")
         N = max(round(0.10 * num_images), 1)
 
     # Look for face landmarks in each image
@@ -251,13 +251,13 @@ def warpTriangle(img1, img2, t1, t2):
     return img2
 
 def create_average_face(faces, landmarks,
-                        output_dims=(800, 800),
+                        output_dims=(450, 600),
                         save_image=True,
                         output_file="average_face.jpg",
                         verbose=True):
     """Combine the faces into an average face"""
     if verbose:
-        print(f"Starting face averaging for {len(faces)} faces.")
+        print(f"\nStarting face averaging for {len(faces)} faces.")
     msg = "Number of landmark sets != number of images."
     assert len(faces) == len(landmarks), msg
 
@@ -286,7 +286,7 @@ def create_average_face(faces, landmarks,
     N = max(round(0.10 * num_images), 1)
     for i in range(0, num_images):
         if verbose and i % N == 0:
-            print(f"Image {i} / {num_images}")
+            print(f"Image {i + 1} / {num_images}")
 
         # Corners of the eye in input image
         points1 = landmarks[i]
