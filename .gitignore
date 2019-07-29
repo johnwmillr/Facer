@@ -16,6 +16,7 @@ data
 
 # Jupyter
 .ipynb_checkpoints
+*.ipynb
 
 # Test files
 .cache
