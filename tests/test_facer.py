@@ -17,3 +17,10 @@ class TestEndpoints(unittest.TestCase):
                     os.path.join(self.root, "jimmy-carter.png"),
                     os.path.join(self.root, "ronald-regan.jpeg")]
         self.assertTrue(files == expected, msg)
+
+    def test_detect_face_landmarks(self):
+        msg = "Incorrect number of face landmarks found."
+        kwargs = {"save_landmarks":False, "verbose":False}
+        landmarks = facer.detect_face_landmarks(self.root, **kwargs)
+        expected = [[], [], []] # List of length 3 (kludge)
+        self.assertTrue(len(landmarks) == len(expected), msg)

@@ -8,6 +8,7 @@ images
 *.png
 
 # Data
+dlib
 data
 *.csv
 *.txt
