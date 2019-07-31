@@ -76,6 +76,7 @@ def load_face_landmarks(root, verbose=True):
     """
     #List all files in the directory and read points from text files one by one
     all_paths = glob.glob(root.strip("/") + "/*_landmarks*")
+    print(all_paths)
     landmarks = []
     for fn in all_paths:
         points = []
@@ -120,21 +121,22 @@ def detect_face_landmarks(images, save_landmarks=True, max_faces=1, verbose=True
             continue
 
         # Find landmarks, save to CSV
-        face = found_faces[0] # Kludge for now, just take first face
-        all_faces.append(image)
-        landmarks = predictor(imageForDlib, face)
-        if not landmarks:
-            num_skips += 1
-            continue
+        for num, face in enumerate(found_faces):
+            landmarks = predictor(imageForDlib, face)
+            if not landmarks:
+                continue
 
-        # Save landmarks as a CSV file (optional)
-        fp = file.rsplit(".", 1)[0] + "_landmarks.csv"
-        if save_landmarks:
-            save_landmarks_to_disk(landmarks.parts(), fp=fp)
+            # Add this image to be averaged later
+            all_faces.append(image)
 
-        # Convert landmarks to list of (x, y) tuples
-        lm = [(point.x, point.y) for point in landmarks.parts()]
-        all_landmarks.append(lm)
+            # Convert landmarks to list of (x, y) tuples
+            lm = [(point.x, point.y) for point in landmarks.parts()]
+            all_landmarks.append(lm)
+
+            # Save landmarks as a CSV file (optional)
+            if save_landmarks:
+                fp = file.rsplit(".", 1)[0] + f"_landmarks_{num}.csv"
+                save_landmarks_to_disk(landmarks.parts(), fp=fp)
 
     if verbose:
         print(f"Skipped {100 * (num_skips / num_images):.1f}% of images.")
@@ -251,7 +253,7 @@ def warpTriangle(img1, img2, t1, t2):
     return img2
 
 def create_average_face(faces, landmarks,
-                        output_dims=(450, 600),
+                        output_dims=(600, 600),
                         save_image=True,
                         output_file="average_face.jpg",
                         verbose=True):

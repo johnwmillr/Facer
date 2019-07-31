@@ -14,7 +14,7 @@ class TestEndpoints(unittest.TestCase):
         msg = "Files names were not ingested properly."
         files = facer.glob_image_files(self.root)
         names = ["barack-obama.jpg", "jimmy-carter.png",
-                 "ronald-reagan.jpeg", "logo.png"]
+                 "ronald-reagan.jpeg", "logo.png", "black-sabbath.jpg"]
         expected = [os.path.join(self.root, name) for name in names]
         self.assertTrue(sorted(files) == sorted(expected), msg)
 
@@ -22,21 +22,21 @@ class TestEndpoints(unittest.TestCase):
         msg = "Incorrect number of images loaded."
         kwargs = {"verbose":True}
         images = facer.load_images(self.root, **kwargs)
-        expected = 4 * [[]] # List of length 4 (kludge)
+        expected = 5 * [[]] # List of length 4 (kludge)
         self.assertTrue(len(images.keys()) == len(expected), msg)
 
     def test_load_face_landmarks(self):
         msg = "Couldn't load landmarks."
         landmarks = facer.load_face_landmarks(self.root)
-        expected = 3 * [[]] # Kludge for now
+        expected = 6 * [[]] # Kludge for now
         self.assertTrue(len(landmarks) == len(expected))
 
     def test_detect_face_landmarks(self):
         msg = "Incorrect number of face landmarks found."
-        kwargs = {"save_landmarks":True, "verbose":True}
+        kwargs = {"save_landmarks":True, "verbose":True, "max_faces":10}
         images = facer.load_images(self.root, verbose=False)
         landmarks, faces = facer.detect_face_landmarks(images, **kwargs)
-        expected = 3 * [[]] # List of length 3 (kludge)
+        expected = 6 * [[]] # List of length 3 (kludge)
         self.assertTrue(len(landmarks) == len(expected), msg)
 
     # def test_create_average_face(self):
