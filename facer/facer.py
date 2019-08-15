@@ -348,3 +348,48 @@ def create_average_face(faces, landmarks,
         cv2.imwrite(output_file, 255 * output[..., ::-1])
 
     return output
+
+def save_labeled_face_image(image, name, dir_out="./", label="@johnwmillr"):
+    # Plot the image
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.imshow(image)
+
+    # Add a title
+    kwargs = {"fontsize": 20, "fontweight": "heavy", "color": "gray", "alpha":0.9}
+    title = f"{name} average face"
+    ax.set_title(title, **kwargs)
+
+    # Touch up the image
+    ax.set(**{"xlabel": '', "ylabel": '', "xticks": [], "yticks": []})
+    plt.tight_layout()
+    kwargs = {'fontsize': 17, 'color': 'black', 'weight': 'heavy', 'alpha': 0.6, 'ha': 'right'}
+    x, y = image.shape[:2]
+    x, y = 0.98 * x, 0.97 * y
+    ax.text(x, y, label, **kwargs)
+
+    # Save the image
+    fp = os.path.join(dir_out, f"average_face_{name}_labeled.png")
+    fp = fp.replace(" ", "_")
+    fig.savefig(fp, dpi=300)
+
+def create_average_face_from_directory(dir_in, dir_out, name, **kwargs):
+    verbose = kwargs.get('verbose', True)
+    if verbose:
+        print(f"Directory: {dir_in}")
+    images = load_images(dir_in, verbose=verbose)
+    if len(images) == 0:
+        if verbose:
+            print(f"Couldn't find any images in: '{dir_in}'.")
+        return
+
+    # Detect landmarks for each face
+    landmarks, faces = detect_face_landmarks(images, verbose=verbose)
+
+    # Use  the detected landmarks to create an average face
+    fn = f"average_face_{name}.jpg"
+    fp = os.path.join(dir_out, fn).replace(" ", "_")
+    average_face = create_average_face(faces, landmarks, output_file=fp, save_image=True)
+
+    # Save a labeled version of the average face
+    save_labeled_face_image(average_face, name, dir_out)
+    return
