@@ -89,12 +89,13 @@ def load_face_landmarks(root, verbose=True):
         landmarks.append(points)
     return landmarks
 
-def detect_face_landmarks(images, save_landmarks=True, max_faces=1, verbose=True):
+def detect_face_landmarks(images, save_landmarks=True, max_faces=1, verbose=True, print_freq=0.10):
     """Detect and save the face landmarks for each image
     :param images: (dict) Dict of image files and arrays from `load_images()`.
     :param save_landmarks: (bool) Save landmarks to .CSV
     :param max_faces: (int) Skip images with too many faces found.
     :param verbose: (bool) Toggle verbosity
+    :param print_freq: (float) How often do you want print statements?
     :output landmarks: (list) 68 landmarks for each found face
     :output faces: (list) List of the detected face images
     """
@@ -102,7 +103,7 @@ def detect_face_landmarks(images, save_landmarks=True, max_faces=1, verbose=True
     if verbose:
         print(f"\nStarting face landmark detection...")
         print(f"Processing {num_images} images.")
-        N = max(round(0.10 * num_images), 1)
+        N = max(round(print_freq * num_images), 1)
 
     # Look for face landmarks in each image
     num_skips = 0
@@ -256,7 +257,8 @@ def create_average_face(faces, landmarks,
                         output_dims=(600, 600),
                         save_image=True,
                         output_file="average_face.jpg",
-                        verbose=True):
+                        verbose=True,
+                        print_freq=0.05):
     """Combine the faces into an average face"""
     if verbose:
         print(f"\nStarting face averaging for {len(faces)} faces.")
@@ -285,7 +287,7 @@ def create_average_face(faces, landmarks,
 
     # Warp images and trasnform landmarks to output coordinate system,
     # and find average of transformed landmarks.
-    N = max(round(0.10 * num_images), 1)
+    N = max(round(print_freq * num_images), 1)
     for i in range(0, num_images):
         if verbose and i % N == 0:
             print(f"Image {i + 1} / {num_images}")
