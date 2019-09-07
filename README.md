@@ -1,43 +1,36 @@
 # Facer
 
-Python package for simple face detection, alignment, and averaging using `OpenCV` and `dlib`.
+Face detection, alignment, and averaging using OpenCV and `dlib`.
 
-This package draws heavily on [this tutorial](https://www.learnopencv.com/average-face-opencv-c-python-tutorial/) from [Satya Mallick](https://github.com/spmallick). I had to update the code pretty heavily to get the project to work, so I thought I'd share my modifications.
+Facer draws heavily on [this tutorial](https://www.learnopencv.com/average-face-opencv-c-python-tutorial/) from [Satya Mallick](https://github.com/spmallick). I had to update the code pretty heavily to get the project to work, so I thought I'd share my modifications.
 
 # Installation
-You have my 100%, money-back guarantee, that the most difficult part of using this package is installing the requirements. Once you've got `OpenCV` and `dlib` installed, the rest will be smooth sailing.
+You have my 100% money-back guarantee that the most difficult part of using this package is installing its requirements. Once you've got OpenCV installed, the rest will be smooth sailing.
 
-## `OpenCV`
-On Mac, use [`homebrew`]() to install `OpenCV`. On Windows, I have no clue. Sorry.
+## OpenCV
+On Mac, use [`homebrew`](https://brew.sh) to install OpenCV. On Windows, I have no clue. Sorry.
 
 ```shell
 brew install opencv
 ```
 
-Installing `OpenCV` with `brew` did actually work for me, but it also broke my previous Python installation and all my virtual environments. So uh, good luck with that.
+Using `brew` to install OpenCV did actually work for me, but it also broke my previous Python installation and all my virtual environments. So uhh, good luck with that.
 
-## `dlib`
-Installing `dlib` is hopefully straightforward. You can use `pip`:
+## Python packages
+After installing OpenCV, use `pip` to install `dlib`, `matplotlib`, and `numpy` from the `requirements.txt` file.
 
-```shell
-pip install dlib
+```
+pip install -r requirements.txt
 ```
 
 ### Pre-trained detection models
-The face landmark detection relies on a pre-trained model that must be downloaded separately from the `dlib` package itself.
+The `dlib` package handles face detection and requires an additional pre-trained model for that purpose. The pre-trained face detection model must be downloaded separately from the `dlib` package itself.
 
 ```shell
 wget http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2
 ```
 
-Unzip the compressed file after it finishes downloading.
-
-## Python requirements
-After installing `OpenCV` and `dlib`, we just need to add a few more helper libraries.
-
-```
-pip install -r requirements.txt
-```
+Unzip the compressed file after it finishes downloading and move it into the `./Facer/dlib` directory.
 
 # Usage
 ```python
