@@ -1,10 +1,12 @@
 import cv2
 import dlib
 import matplotlib.pyplot as plt
+from matplotlib import animation
 import numpy as np
 import math
 import os
 import glob
+
 from facer.utils import similarityTransform, constrainPoint, calculateDelaunayTriangles, warpTriangle
 
 # https://www.learnopencv.com/facial-landmark-detection/
@@ -52,7 +54,7 @@ def load_images(root, verbose=True):
     :param verbose: (bool) Toggle verbosity
     :output images: (dict) Dict of OpenCV image arrays, key is filename
     """
-    files = glob_image_files(root)
+    files = sorted(glob_image_files(root))
     num_files = len(files)
     if verbose:
         print(f"\nFound {num_files} in '{root}'.")
@@ -90,7 +92,11 @@ def load_face_landmarks(root, verbose=True):
         landmarks.append(points)
     return landmarks
 
-def detect_face_landmarks(images, save_landmarks=True, max_faces=1, verbose=True, print_freq=0.10):
+def detect_face_landmarks(images,
+                          save_landmarks=True,
+                          max_faces=1,
+                          verbose=True,
+                          print_freq=0.10):
     """Detect and save the face landmarks for each image
     :param images: (dict) Dict of image files and arrays from `load_images()`.
     :param save_landmarks: (bool) Save landmarks to .CSV
@@ -144,10 +150,12 @@ def detect_face_landmarks(images, save_landmarks=True, max_faces=1, verbose=True
         print(f"Skipped {100 * (num_skips / num_images):.1f}% of images.")
     return all_landmarks, all_faces
 
-def create_average_face(faces, landmarks,
+def create_average_face(faces,
+                        landmarks,
                         output_dims=(600, 600),
                         save_image=True,
                         output_file="average_face.jpg",
+                        return_intermediates=False,
                         verbose=True,
                         print_freq=0.05):
     """Combine the faces into an average face"""
@@ -160,7 +168,8 @@ def create_average_face(faces, landmarks,
     num_images = len(faces)
     n = len(landmarks[0])
     w, h = output_dims
-    eyecornerDst = [(np.int(0.3 * w), np.int(h / 3)), (np.int(0.7 * w), np.int(h / 3))]
+    eyecornerDst = [(np.int(0.3 * w), np.int(h / 3)),
+                    (np.int(0.7 * w), np.int(h / 3))]
     imagesNorm, pointsNorm = [], []
 
     # Add boundary points for delaunay triangulation
@@ -178,6 +187,7 @@ def create_average_face(faces, landmarks,
 
     # Warp images and trasnform landmarks to output coordinate system,
     # and find average of transformed landmarks.
+    warped, incremental = [], []
     N = max(round(print_freq * num_images), 1)
     for i in range(0, num_images):
         if verbose and i % N == 0:
@@ -191,7 +201,7 @@ def create_average_face(faces, landmarks,
         tform = similarityTransform(eyecornerSrc, eyecornerDst)
 
         # Apply similarity transformation
-        img = cv2.warpAffine(faces[i], tform, (w, h)).get()
+        img_affine = cv2.warpAffine(faces[i], tform, (w, h)).get()
 
         # Apply similarity transform on points
         points2 = np.reshape(np.array(points1), (68, 1, 2))
@@ -204,16 +214,16 @@ def create_average_face(faces, landmarks,
         # Calculate location of average landmark points.
         pointsAvg = pointsAvg + points / num_images
         pointsNorm.append(points)
-        imagesNorm.append(img)
+        imagesNorm.append(img_affine)
 
         # Delaunay triangulation
         rect = (0, 0, w, h);
         dt = calculateDelaunayTriangles(rect, np.array(pointsAvg))
 
         # Warp input images to average image landmarks
-        output = np.zeros((h,w,3), np.float32())
+        output = np.zeros((h, w, 3), np.float32())
         for i in range(0, len(imagesNorm)):
-            img = np.zeros((h,w,3), np.float32())
+            img = np.zeros((h, w, 3), np.float32())
             # Transform triangles one by one
             for j in range(0, len(dt)):
                 tin, tout = [], []
@@ -228,44 +238,31 @@ def create_average_face(faces, landmarks,
                     tin.append(pIn)
                     tout.append(pOut)
                 img = warpTriangle(imagesNorm[i], img, tin, tout)
+            incremental.append((output + img) / (i + 1))
+
 
             # Add image intensities for averaging
             output = output + img
 
         # Divide by num_images to get average
         output = output / num_images
+
+        warped.append(img_affine)
+    incremental = incremental[-num_images:]
     print('Done.')
 
     # Save the output image to disk
     if save_image:
         cv2.imwrite(output_file, 255 * output[..., ::-1])
-
+    if return_intermediates: # For animated GIFs
+        return output, warped, incremental, imagesNorm
     return output
 
-def save_labeled_face_image(image, name, dir_out="./", label="@johnwmillr"):
-    # Plot the image
-    fig, ax = plt.subplots(figsize=(6, 6))
-    ax.imshow(image)
-
-    # Add a title
-    kwargs = {"fontsize": 20, "fontweight": "heavy", "color": "gray", "alpha":0.9}
-    title = f"{name} average face"
-    ax.set_title(title, **kwargs)
-
-    # Touch up the image
-    ax.set(**{"xlabel": '', "ylabel": '', "xticks": [], "yticks": []})
-    plt.tight_layout()
-    kwargs = {'fontsize': 17, 'color': 'black', 'weight': 'heavy', 'alpha': 0.6, 'ha': 'right'}
-    x, y = image.shape[:2]
-    x, y = 0.98 * x, 0.97 * y
-    ax.text(x, y, label, **kwargs)
-
-    # Save the image
-    fp = os.path.join(dir_out, f"average_face_{name}_labeled.png")
-    fp = fp.replace(" ", "_")
-    fig.savefig(fp, dpi=300)
-
-def create_average_face_from_directory(dir_in, dir_out, name, **kwargs):
+def create_average_face_from_directory(dir_in,
+                                       dir_out,
+                                       filename,
+                                       save_image=True,
+                                       **kwargs):
     verbose = kwargs.get('verbose', True)
     if verbose:
         print(f"Directory: {dir_in}")
@@ -279,10 +276,110 @@ def create_average_face_from_directory(dir_in, dir_out, name, **kwargs):
     landmarks, faces = detect_face_landmarks(images, verbose=verbose)
 
     # Use  the detected landmarks to create an average face
-    fn = f"average_face_{name}.jpg"
+    fn = f"average_face_{filename}.jpg"
     fp = os.path.join(dir_out, fn).replace(" ", "_")
-    average_face = create_average_face(faces, landmarks, output_file=fp, save_image=True)
+    average_face = create_average_face(faces,
+                                       landmarks,
+                                       output_file=fp,
+                                       save_image=True)
 
     # Save a labeled version of the average face
-    save_labeled_face_image(average_face, name, dir_out)
+    if save_image:
+        save_labeled_face_image(average_face, filename, dir_out)
+    return average_face
+
+def save_labeled_face_image(image, name, dir_out="./", label=""):
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.imshow(image)
+
+    # Add a title
+    kwargs = {"fontsize": 20, "fontweight": "heavy",
+              "color": "gray", "alpha":0.9}
+    title = f"{name} average face"
+    ax.set_title(title, **kwargs)
+
+    # Touch up the image
+    ax.set(**{"xlabel": '', "ylabel": '', "xticks": [], "yticks": []})
+    plt.tight_layout()
+    kwargs = {'fontsize': 17, 'color': 'black', 'weight': 'heavy',
+              'alpha': 0.6, 'ha': 'right'}
+    x, y = image.shape[:2]
+    x, y = 0.98 * x, 0.97 * y
+    ax.text(x, y, label, **kwargs)
+
+    # Save the image
+    fp = os.path.join(dir_out, f"average_face_{name}_labeled.png")
+    fp = fp.replace(" ", "_")
+    fig.savefig(fp, dpi=300)
     return
+
+def create_animated_gif(path_to_images, save_gif=True, verbose=True):
+    """Create an animated face average GIF from a directory of images"""
+    def save_to_file(gif, fn=None, fps=None, verbose=True):
+        fn = "animation" if not fn else fn
+        if not fps:
+            fps = (1e3 / gif._interval)
+        if verbose:
+            print(fn)
+        gif.save(f'./{fn}.gif', writer='imagemagick', fps=fps)
+        if verbose:
+            print("Done saving the GIF.")
+
+    # Load the images
+    images = load_images(path_to_images, verbose=verbose)
+
+    # Detect face landmarks
+    landmarks, faces = detect_face_landmarks(images, verbose=verbose)
+
+    # Create the average face and interim images
+    averaged, warped, incremental, raw = create_average_face(faces,
+                                                             landmarks,
+                                                             return_intermediates=True,
+                                                             save_image=False,
+                                                             verbose=verbose)
+
+    # Create the animation
+    def tight(**kwargs):
+        plt.tight_layout(**kwargs)
+
+    # Make the plot
+    fig, axs = plt.subplots(1, 2, figsize=(6, 3.7))
+    lines = []
+    titles = ["Individual", "Averaged"]
+    kwargs = {"fontsize": 18, "color": "white", "alpha": 1.0, "weight": "heavy"}
+    for ax, title in zip(axs, titles):
+        lines.append(ax.imshow(np.zeros_like(warped[0])))
+        ax.axis('off')
+        ax.set_title(title, fontsize=18)
+    k = dict(pad=0, w_pad=0, h_pad=0) # Layout values
+    tight(**k)
+
+    # initialization function: plot the background of each frame
+    def init():
+        for line in lines:
+            line.set_data(np.zeros_like(raw[0]))
+        tight(**k)
+        return lines
+
+    # animation function. This is called sequentially
+    def animate(i):
+        num_raw = len(raw)
+        i = min(num_raw - 1, i)
+        orig, average = lines
+        orig.set_data(raw[i])
+        average.set_data(incremental[-num_raw:][i])
+        tight(**k)
+        return lines
+
+    # Call the animator
+    anim = animation.FuncAnimation(fig,
+                                   animate,
+                                   init_func=init,
+                                   frames=round(1.5 * len(raw)),
+                                   interval=500,
+                                   blit=True)
+
+    # Save the animation
+    if save_gif:
+        save_to_file(anim)
+    return anim, averaged
