@@ -6,6 +6,7 @@ images
 *.jpg
 *.jpeg
 *.png
+*.gif
 
 # Data
 dlib

@@ -23,8 +23,8 @@ After installing OpenCV, use `pip` to install `dlib`, `matplotlib`, and `numpy` 
 pip install -r requirements.txt
 ```
 
-### Pre-trained detection models
-The `dlib` package handles face detection and requires an additional pre-trained model for that purpose. The pre-trained face detection model must be downloaded separately from the `dlib` package itself.
+### Pre-trained detection model
+The face landmark detection relies on a pre-trained model that must be downloaded separately from the `dlib` package itself.
 
 ```shell
 wget http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2
@@ -49,4 +49,13 @@ average_face = facer.create_average_face(faces, landmarks, save_image=True)
 # View the composite image
 plt.imshow(average_face)
 plt.show()
+```
+
+Facer also supports creating animated GIFs of the averaging process:
+
+```python
+from facer import facer
+
+path_to_images = "./face_images"
+gif, average_face = facer.create_animated_gif(path_to_images)
 ```

@@ -46,3 +46,8 @@ class TestEndpoints(unittest.TestCase):
     #     kwargs = {"save_image": False}
     #     average_face = facer.create_average_face(faces, landmarks, **kwargs)
     #     self.assertTrue(average_face != []) # Terrible test
+
+    # def test_create_animated_gif(self):
+    #     msg = "Failed to create an animated GIF."
+    #     input_dir = "./tests/images"
+    #     facer.test_create_animated_gif(input_dir)
