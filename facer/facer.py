@@ -238,7 +238,8 @@ def create_average_face(faces,
                     tin.append(pIn)
                     tout.append(pOut)
                 img = warpTriangle(imagesNorm[i], img, tin, tout)
-            incremental.append((output + img) / (i + 1))
+            if return_intermediates:
+                incremental.append((output + img) / (i + 1))
 
 
             # Add image intensities for averaging
@@ -247,7 +248,8 @@ def create_average_face(faces,
         # Divide by num_images to get average
         output = output / num_images
 
-        warped.append(img_affine)
+        if return_intermediates:
+            warped.append(img_affine)
     incremental = incremental[-num_images:]
     print('Done.')
 
