@@ -170,8 +170,8 @@ def create_average_face(faces,
     n = len(landmarks[0])
     w, h = output_dims
     # Interesting that this uses constant values, 0.3 and 0.7
-    eyecornerDst = [(np.int(0.3 * w), np.int(h / 3)),
-                    (np.int(0.7 * w), np.int(h / 3))]
+    eyecornerDst = [(int(0.3 * w), int(h / 3)),
+                    (int(0.7 * w), int(h / 3))]
     imagesNorm, pointsNorm = [], []
 
     # Add boundary points for delaunay triangulation

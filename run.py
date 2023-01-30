@@ -6,7 +6,7 @@ warnings.simplefilter("error", np.VisibleDeprecationWarning)
 from facer import facer
 
 # Load face images
-path_to_images = "./face_images"
+path_to_images = "./cleaner"
 images = facer.load_images(path_to_images)
 #
 # # Detect landmarks for each face

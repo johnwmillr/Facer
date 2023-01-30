@@ -17,11 +17,11 @@ def similarityTransform(inPoints, outPoints) :
 
     xin = c60*(inPts[0][0] - inPts[1][0]) - s60*(inPts[0][1] - inPts[1][1]) + inPts[1][0];
     yin = s60*(inPts[0][0] - inPts[1][0]) + c60*(inPts[0][1] - inPts[1][1]) + inPts[1][1];
-    inPts.append([np.int(xin), np.int(yin)]);
+    inPts.append([int(xin), int(yin)]);
 
     xout = c60*(outPts[0][0] - outPts[1][0]) - s60*(outPts[0][1] - outPts[1][1]) + outPts[1][0];
     yout = s60*(outPts[0][0] - outPts[1][0]) + c60*(outPts[0][1] - outPts[1][1]) + outPts[1][1];
-    outPts.append([np.int(xout), np.int(yout)]);
+    outPts.append([int(xout), int(yout)]);
 
     tform = cv2.estimateAffinePartial2D(np.array([inPts]), np.array([outPts]))
     return cv2.UMat(tform[0])
