@@ -19,7 +19,7 @@ def load_landmark_predictor(predictor_path):
     return dlib.shape_predictor(predictor_path)
 
 # Load the face detector and landmark predictor
-PREDICTOR_PATH = "./dlib/shape_predictor_68_face_landmarks.dat"
+PREDICTOR_PATH = "./model/shape_predictor_68_face_landmarks.dat"
 detector = load_face_detector()
 predictor = load_landmark_predictor(PREDICTOR_PATH)
 print("Done, models loaded.")
@@ -37,6 +37,7 @@ def plot_face_landmarks(points, color="red", style=".", **kwargs):
         except:
             x, y = point[0], point[1]
         plt.plot(x, y, style, color=color, **kwargs)
+    plt.gca().invert_yaxis()
 
 def save_landmarks_to_disk(points, fp):
     txt = "\n".join(list(map(lambda p: f"{p.x}, {p.y}", (points))))
@@ -121,7 +122,7 @@ def detect_face_landmarks(images,
 
         # Try to detect a face in the image
         imageForDlib = dlib.load_rgb_image(file) # Kludge for now
-        found_faces = detector(imageForDlib, 1)
+        found_faces = detector(imageForDlib)
 
         # Only save landmarks when num_faces = 1
         if len(found_faces) == 0 or len(found_faces) > max_faces:
@@ -185,7 +186,7 @@ def create_average_face(faces,
     # Initialize location of average points to 0s
     pointsAvg = np.array([(0, 0)] * (len(landmarks[0]) + len(boundaryPts)), np.float32())
 
-    # Warp images and trasnform landmarks to output coordinate system,
+    # Warp images and transform landmarks to output coordinate system,
     # and find average of transformed landmarks.
     warped, incremental = [], []
     N = max(round(print_freq * num_images), 1)

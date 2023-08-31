@@ -10,6 +10,7 @@ images
 
 # Data
 dlib
+model
 data
 *.csv
 *.txt
