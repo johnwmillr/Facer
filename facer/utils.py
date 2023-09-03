@@ -78,10 +78,17 @@ def calculateDelaunayTriangles(rect, points):
             ind = []
             for j in range(0, 3):
                 for k in range(0, len(points)):
-                    if(abs(pt[j][0] - points[k][0]) < 1.0 and abs(pt[j][1] - points[k][1]) < 1.0):
+                    # Hyperparameter
+                    if(abs(pt[j][0] - points[k][0]) < .001 and abs(pt[j][1] - points[k][1]) < .001):
                         ind.append(k)
             if len(ind) == 3:
                 delaunayTri.append((ind[0], ind[1], ind[2]))
+            elif len(ind) == 4:
+                delaunayTri.append((ind[0], ind[1], ind[2]))
+                delaunayTri.append((ind[1], ind[2], ind[3]))
+                # May need to use this too?
+                # delaunayTri.append((ind[2], ind[3], ind[0]))
+                # delaunayTri.append((ind[3], ind[0], ind[1]))
     return delaunayTri
 
 # Warps and alpha blends triangular regions from img1 and img2 to img

@@ -169,6 +169,7 @@ def create_average_face(faces,
     num_images = len(faces)
     n = len(landmarks[0])
     w, h = output_dims
+    # Interesting that this uses constant values, 0.3 and 0.7
     eyecornerDst = [(np.int(0.3 * w), np.int(h / 3)),
                     (np.int(0.7 * w), np.int(h / 3))]
     imagesNorm, pointsNorm = [], []
@@ -184,7 +185,7 @@ def create_average_face(faces,
                             (0, h / 2)])
 
     # Initialize location of average points to 0s
-    pointsAvg = np.array([(0, 0)] * (len(landmarks[0]) + len(boundaryPts)), np.float32())
+    pointsAvg = np.array([(0, 0)] * (n + len(boundaryPts)), np.float32())
 
     # Warp images and transform landmarks to output coordinate system,
     # and find average of transformed landmarks.
@@ -206,19 +207,23 @@ def create_average_face(faces,
 
         # Apply similarity transform on points
         points2 = np.reshape(np.array(points1), (68, 1, 2))
+
         points = cv2.transform(points2, tform).get()
         points = np.float32(np.reshape(points, (68, 2)))
 
         # Append boundary points. Will be used in Delaunay Triangulation
         points = np.append(points, boundaryPts, axis=0)
+        #print(points)
 
         # Calculate location of average landmark points.
         pointsAvg = pointsAvg + points / num_images
         pointsNorm.append(points)
         imagesNorm.append(img_affine)
 
+        # To see the dotted landmarks, use this:
+        # plot_face_landmarks(pointsAvg)
         # Delaunay triangulation
-        rect = (0, 0, w, h);
+        rect = (0, 0, w, h)
         dt = calculateDelaunayTriangles(rect, np.array(pointsAvg))
 
         # Warp input images to average image landmarks
@@ -228,7 +233,6 @@ def create_average_face(faces,
             # Transform triangles one by one
             for j in range(0, len(dt)):
                 tin, tout = [], []
-
                 for k in range(0, 3):
                     pIn = pointsNorm[i][dt[j][k]]
                     pIn = constrainPoint(pIn, w, h)
@@ -239,6 +243,9 @@ def create_average_face(faces,
                     tin.append(pIn)
                     tout.append(pOut)
                 img = warpTriangle(imagesNorm[i], img, tin, tout)
+                # Use this is you want to incrementally see the triangles
+                #plt.imshow(img)
+                #plt.show()
             if return_intermediates:
                 incremental.append((output + img) / (i + 1))
 
@@ -267,6 +274,7 @@ def create_average_face_from_directory(dir_in,
                                        save_image=True,
                                        **kwargs):
     verbose = kwargs.get('verbose', True)
+    return_intermediates = kwargs.get('return_intermediates', False)
     if verbose:
         print(f"Directory: {dir_in}")
     images = load_images(dir_in, verbose=verbose)
@@ -284,7 +292,8 @@ def create_average_face_from_directory(dir_in,
     average_face = create_average_face(faces,
                                        landmarks,
                                        output_file=fp,
-                                       save_image=True)
+                                       save_image=True,
+                                       return_intermediates=return_intermediates)
 
     # Save a labeled version of the average face
     if save_image:
