@@ -169,7 +169,6 @@ def create_average_face(faces,
     num_images = len(faces)
     n = len(landmarks[0])
     w, h = output_dims
-    # Interesting that this uses constant values, 0.3 and 0.7
     eyecornerDst = [(int(0.3 * w), int(h / 3)),
                     (int(0.7 * w), int(h / 3))]
     imagesNorm, pointsNorm = [], []
@@ -207,13 +206,11 @@ def create_average_face(faces,
 
         # Apply similarity transform on points
         points2 = np.reshape(np.array(points1), (68, 1, 2))
-
         points = cv2.transform(points2, tform).get()
         points = np.float32(np.reshape(points, (68, 2)))
 
         # Append boundary points. Will be used in Delaunay Triangulation
         points = np.append(points, boundaryPts, axis=0)
-        #print(points)
 
         # Calculate location of average landmark points.
         pointsAvg = pointsAvg + points / num_images
@@ -243,9 +240,6 @@ def create_average_face(faces,
                     tin.append(pIn)
                     tout.append(pOut)
                 img = warpTriangle(imagesNorm[i], img, tin, tout)
-                # Use this is you want to incrementally see the triangles
-                #plt.imshow(img)
-                #plt.show()
             if return_intermediates:
                 incremental.append((output + img) / (i + 1))
 
@@ -272,9 +266,8 @@ def create_average_face_from_directory(dir_in,
                                        dir_out,
                                        filename,
                                        save_image=True,
-                                       **kwargs):
-    verbose = kwargs.get('verbose', True)
-    return_intermediates = kwargs.get('return_intermediates', False)
+                                       verbose=True,
+                                       return_intermediates=False):
     if verbose:
         print(f"Directory: {dir_in}")
     images = load_images(dir_in, verbose=verbose)
