@@ -5,6 +5,9 @@ from facer import facer
 
 class TestEndpoints(unittest.TestCase):
 
+    NUM_IMAGES = 4
+    NUM_FACE_IMAGES = 3
+
     @classmethod
     def setUpClass(cls):
         print("\n---------------------\nSetting up Facer tests...\n")
@@ -13,8 +16,7 @@ class TestEndpoints(unittest.TestCase):
     def test_image_file_globbing(self):
         msg = "Files names were not ingested properly."
         files = facer.glob_image_files(self.root)
-        names = ["barack-obama.jpg", "jimmy-carter.png",
-                 "ronald-reagan.jpeg", "logo.png", "black-sabbath.jpg"]
+        names = ["dawn-beatty.jpg", "github.jpg", "kyle-daigle.jpg", "thomas-dohmke.jpg"]
         expected = [os.path.join(self.root, name) for name in names]
         self.assertTrue(sorted(files) == sorted(expected), msg)
 
@@ -22,13 +24,13 @@ class TestEndpoints(unittest.TestCase):
         msg = "Incorrect number of images loaded."
         kwargs = {"verbose":True}
         images = facer.load_images(self.root, **kwargs)
-        expected = 5 * [[]] # List of length 4 (kludge)
+        expected = self.NUM_IMAGES * [[]]
         self.assertTrue(len(images.keys()) == len(expected), msg)
 
     def test_load_face_landmarks(self):
         msg = "Couldn't load landmarks."
         landmarks = facer.load_face_landmarks(self.root)
-        expected = 6 * [[]] # Kludge for now
+        expected = self.NUM_FACE_IMAGES * [[]]
         self.assertTrue(len(landmarks) == len(expected))
 
     def test_detect_face_landmarks(self):
@@ -36,7 +38,7 @@ class TestEndpoints(unittest.TestCase):
         kwargs = {"save_landmarks":True, "verbose":True, "max_faces":10}
         images = facer.load_images(self.root, verbose=False)
         landmarks, faces = facer.detect_face_landmarks(images, **kwargs)
-        expected = 6 * [[]] # List of length 3 (kludge)
+        expected = self.NUM_FACE_IMAGES * [[]]
         self.assertTrue(len(landmarks) == len(expected), msg)
 
     # def test_create_average_face(self):
