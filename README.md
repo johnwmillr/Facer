@@ -4,7 +4,11 @@ Face detection, alignment, and averaging using OpenCV and `dlib`.
 
 Facer draws heavily on [this tutorial](https://www.learnopencv.com/average-face-opencv-c-python-tutorial/) from [Satya Mallick](https://github.com/spmallick). I had to update the code pretty heavily to get the project to work, so I thought I'd share my modifications.
 
-[![Average faces of rap, rock, and country music](AverageFaces_RapRockCountry.png)](https://www.reddit.com/r/dataisbeautiful/comments/crxrud/the_average_faces_of_rap_rock_and_country/)
+## Example
+
+The image below is an example of Facer's output for one of my posts on [`r/dataisbeautiful`](https://www.reddit.com/r/dataisbeautiful/comments/crxrud/the_average_faces_of_rap_rock_and_country/).
+
+[![Average faces of rap, rock, and country music](assets/average_face_example.png)](https://www.reddit.com/r/dataisbeautiful/comments/crxrud/the_average_faces_of_rap_rock_and_country/)
 
 ## Installation
 
