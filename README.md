@@ -14,11 +14,10 @@ The image below is an example of Facer's output for one of my posts on [`r/datai
 
 You have my 100% money-back guarantee that the most difficult part of using this package is installing its requirements. Once you've got OpenCV installed, the rest ~~will~~ should be smooth sailing. I've had the best luck with the OpenCV using the `opencv-python` package from PyPI.
 
-
-The `requirements.txt` file lists the Python packages Facer depends on. Install the packages using `pip`:
+Install `facer` using `pip`:
 
 ```bash
-pip install -r requirements.txt
+pip install -U average-facer
 ```
 
 ### Pre-trained detection model
