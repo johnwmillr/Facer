@@ -26,7 +26,7 @@ dlib = "19.24.6"
 matplotlib = "3.9.2"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.0"
+black = ">=23,<25"
 jupyterlab = "^4.3.0"
 mypy = "^1.13.0"
 
