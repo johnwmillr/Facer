@@ -1,3 +1,4 @@
+from typing import NamedTuple
 import cv2
 import dlib
 import matplotlib.pyplot as plt
@@ -21,7 +22,7 @@ def load_face_detector():
     return dlib.get_frontal_face_detector()
 
 
-def load_landmark_predictor(predictor_path):
+def load_landmark_predictor(predictor_path: str):
     return dlib.shape_predictor(predictor_path)
 
 
@@ -32,7 +33,9 @@ predictor = load_landmark_predictor(PREDICTOR_PATH)
 print("Done, models loaded.")
 
 
-def plot_face_rectangle(points, color="cyan", style="-", alpha=0.8):
+def plot_face_rectangle(
+    points, color: str = "cyan", style: str = "-", alpha: float = 0.8
+) -> None:
     plt.plot(
         [points.left(), points.left()],
         [points.bottom(), points.top()],
@@ -63,7 +66,7 @@ def plot_face_rectangle(points, color="cyan", style="-", alpha=0.8):
     )
 
 
-def plot_face_landmarks(points, color="red", style=".", **kwargs):
+def plot_face_landmarks(points, color: str = "red", style: str = ".", **kwargs) -> None:
     for point in points:
         try:
             x, y = point.x, point.y
@@ -73,19 +76,19 @@ def plot_face_landmarks(points, color="red", style=".", **kwargs):
     plt.gca().invert_yaxis()
 
 
-def save_landmarks_to_disk(points, fp):
+def save_landmarks_to_disk(points, fp: str) -> None:
     txt = "\n".join(list(map(lambda p: f"{p.x}, {p.y}", (points))))
     with open(fp, "w") as outfile:
         outfile.write(txt)
 
 
-def glob_image_files(root, extensions=["jpg", "jpeg", "png"]):
+def glob_image_files(root: str, extensions=["jpg", "jpeg", "png"]) -> list[str]:
     """Returns a list of image files in `root`"""
     files = glob.glob(os.path.join(root, "*"))
     return [f for f in files if f.rsplit(".", 1)[-1].lower() in extensions]
 
 
-def load_images(root, verbose=True):
+def load_images(root: str, verbose: bool = True) -> dict[str, np.ndarray]:
     """Returns list of image arrays
     :param root: (str) Directory containing face images
     :param verbose: (bool) Toggle verbosity
@@ -109,18 +112,21 @@ def load_images(root, verbose=True):
     return images
 
 
-def load_face_landmarks(root, verbose=True):
+PointT = tuple[int, int]
+
+
+def load_face_landmarks(root: str, verbose: bool = True) -> list[list[PointT]]:
     """Load face landmarks created by `detect_face_landmarks()`
-    :param root: (str) Path to folder containing CSV landmark files
-    :param verbose: (bool) Toggle verbosity
-    :output landmarks: (list)
+    :param root: Path to folder containing CSV landmark files
+    :param verbose: Toggle verbosity
+    :output landmarks: List of landmarks for each face.
     """
     # List all files in the directory and read points from text files one by one
     all_paths = glob.glob(root.strip("/") + "/*_landmarks*")
     print(all_paths)
-    landmarks = []
+    landmarks: list[list[PointT]] = []
     for fn in all_paths:
-        points = []
+        points: list[PointT] = []
         with open(fn) as file:
             for line in file:
                 x, y = line.split(", ")
@@ -132,16 +138,20 @@ def load_face_landmarks(root, verbose=True):
 
 
 def detect_face_landmarks(
-    images, save_landmarks=True, max_faces=1, verbose=True, print_freq=0.10
-):
+    images: dict[str, np.ndarray],
+    save_landmarks: bool = True,
+    max_faces: int = 1,
+    verbose: bool = True,
+    print_freq: float = 0.10,
+) -> tuple[list[list[PointT]], list[np.ndarray]]:
     """Detect and save the face landmarks for each image
-    :param images: (dict) Dict of image files and arrays from `load_images()`.
-    :param save_landmarks: (bool) Save landmarks to .CSV
-    :param max_faces: (int) Skip images with too many faces found.
-    :param verbose: (bool) Toggle verbosity
-    :param print_freq: (float) How often do you want print statements?
-    :output landmarks: (list) 68 landmarks for each found face
-    :output faces: (list) List of the detected face images
+    :param images: Dict of image files and arrays from `load_images()`.
+    :param save_landmarks: Save landmarks to .CSV
+    :param max_faces: Skip images with too many faces found.
+    :param verbose: Toggle verbosity
+    :param print_freq: How often do you want print statements?
+    :output landmarks: 68 landmarks for each found face
+    :output faces: List of the detected face images
     """
     num_images = len(images.keys())
     if verbose:
@@ -151,7 +161,8 @@ def detect_face_landmarks(
 
     # Look for face landmarks in each image
     num_skips = 0
-    all_landmarks, all_faces = [], []
+    all_landmarks: list[list[PointT]] = []
+    all_faces: list[np.ndarray] = []
     for n, (file, image) in enumerate(images.items()):
         if verbose and n % N == 0:
             print(f"({n + 1} / {num_images}): {file}")
@@ -189,15 +200,15 @@ def detect_face_landmarks(
 
 
 def create_average_face(
-    faces,
-    landmarks,
-    output_dims=(600, 600),
-    save_image=True,
-    output_file="average_face.jpg",
-    return_intermediates=False,
-    verbose=True,
-    print_freq=0.05,
-):
+    faces: list[np.ndarray],
+    landmarks: list[list[PointT]],
+    output_dims: tuple[int, int] = (600, 600),
+    save_image: bool = True,
+    output_file: str = "average_face.jpg",
+    return_intermediates: bool = False,
+    verbose: bool = True,
+    print_freq: float = 0.05,
+) -> np.ndarray:
     """Combine the faces into an average face"""
     if verbose:
         print(f"\nStarting face averaging for {len(faces)} faces.")
@@ -305,8 +316,13 @@ def create_average_face(
 
 
 def create_average_face_from_directory(
-    dir_in, dir_out, filename, save_image=True, verbose=True, return_intermediates=False
-):
+    dir_in: str,
+    dir_out: str,
+    filename: str,
+    save_image: bool = True,
+    verbose: bool = True,
+    return_intermediates: bool = False,
+) -> np.ndarray | None:
     if verbose:
         print(f"Directory: {dir_in}")
     images = load_images(dir_in, verbose=verbose)
@@ -335,7 +351,9 @@ def create_average_face_from_directory(
     return average_face
 
 
-def save_labeled_face_image(image, name, dir_out="./", label=""):
+def save_labeled_face_image(
+    image: np.ndarray, name: str, dir_out: str = "./", label: str = ""
+) -> None:
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.imshow(image)
 
@@ -365,7 +383,9 @@ def save_labeled_face_image(image, name, dir_out="./", label=""):
     return
 
 
-def create_animated_gif(path_to_images, save_gif=True, verbose=True):
+def create_animated_gif(
+    path_to_images: str, save_gif: bool = True, verbose: bool = True
+) -> tuple[animation.FuncAnimation, np.ndarray]:
     """Create an animated face average GIF from a directory of images"""
 
     def save_to_file(gif: animation.FuncAnimation, fn=None, fps=None, verbose=True):
