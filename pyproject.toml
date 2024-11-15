@@ -7,17 +7,27 @@ license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/johnwmillr/Facer"
 repository = "https://github.com/johnwmillr/Facer"
-keywords = ["opencv", "image-processing", "face-detection", "dlib", "face-average", "facer", "face-averaging"]
-
-packages = [
-    { include = "facer" }
+keywords = [
+    "opencv",
+    "image-processing",
+    "face-detection",
+    "dlib",
+    "face-average",
+    "facer",
+    "face-averaging",
 ]
+
+packages = [{ include = "facer" }]
 
 [tool.poetry.dependencies]
 python = "^3.9"
 opencv-python = "4.10.0.84"
 dlib = "19.24.6"
 matplotlib = "3.9.2"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.0"
+jupyterlab = "^4.3.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -3,11 +3,16 @@ import dlib
 import matplotlib.pyplot as plt
 from matplotlib import animation
 import numpy as np
-import math
 import os
 import glob
 
-from facer.utils import similarityTransform, constrainPoint, calculateDelaunayTriangles, warpTriangle
+from facer.utils import (
+    similarityTransform,
+    constrainPoint,
+    calculateDelaunayTriangles,
+    warpTriangle,
+)
+
 
 # https://www.learnopencv.com/facial-landmark-detection/
 # https://www.learnopencv.com/average-face-opencv-c-python-tutorial/
@@ -15,8 +20,10 @@ def load_face_detector():
     """Loads the dlib face detector"""
     return dlib.get_frontal_face_detector()
 
+
 def load_landmark_predictor(predictor_path):
     return dlib.shape_predictor(predictor_path)
+
 
 # Load the face detector and landmark predictor
 PREDICTOR_PATH = "./model/shape_predictor_68_face_landmarks.dat"
@@ -24,11 +31,37 @@ detector = load_face_detector()
 predictor = load_landmark_predictor(PREDICTOR_PATH)
 print("Done, models loaded.")
 
+
 def plot_face_rectangle(points, color="cyan", style="-", alpha=0.8):
-    plt.plot([points.left(), points.left()], [points.bottom(), points.top()], style, color=color, alpha=alpha)
-    plt.plot([points.left(), points.right()], [points.bottom(), points.bottom()], style, color=color, alpha=alpha)
-    plt.plot([points.left(), points.right()], [points.top(), points.top()], style, color=color, alpha=alpha)
-    plt.plot([points.right(), points.right()], [points.top(), points.bottom()], style, color=color, alpha=alpha)
+    plt.plot(
+        [points.left(), points.left()],
+        [points.bottom(), points.top()],
+        style,
+        color=color,
+        alpha=alpha,
+    )
+    plt.plot(
+        [points.left(), points.right()],
+        [points.bottom(), points.bottom()],
+        style,
+        color=color,
+        alpha=alpha,
+    )
+    plt.plot(
+        [points.left(), points.right()],
+        [points.top(), points.top()],
+        style,
+        color=color,
+        alpha=alpha,
+    )
+    plt.plot(
+        [points.right(), points.right()],
+        [points.top(), points.bottom()],
+        style,
+        color=color,
+        alpha=alpha,
+    )
+
 
 def plot_face_landmarks(points, color="red", style=".", **kwargs):
     for point in points:
@@ -39,15 +72,18 @@ def plot_face_landmarks(points, color="red", style=".", **kwargs):
         plt.plot(x, y, style, color=color, **kwargs)
     plt.gca().invert_yaxis()
 
+
 def save_landmarks_to_disk(points, fp):
     txt = "\n".join(list(map(lambda p: f"{p.x}, {p.y}", (points))))
     with open(fp, "w") as outfile:
         outfile.write(txt)
 
+
 def glob_image_files(root, extensions=["jpg", "jpeg", "png"]):
     """Returns a list of image files in `root`"""
     files = glob.glob(os.path.join(root, "*"))
-    return [f for f in files if f.rsplit(".", 1)[-1] in extensions]
+    return [f for f in files if f.rsplit(".", 1)[-1].lower() in extensions]
+
 
 def load_images(root, verbose=True):
     """Returns list of image arrays
@@ -55,7 +91,7 @@ def load_images(root, verbose=True):
     :param verbose: (bool) Toggle verbosity
     :output images: (dict) Dict of OpenCV image arrays, key is filename
     """
-    files = sorted(glob_image_files(root))
+    files = sorted(glob_image_files(root))[:5]
     num_files = len(files)
     if verbose:
         print(f"\nFound {num_files} in '{root}'.")
@@ -72,13 +108,14 @@ def load_images(root, verbose=True):
         images[file] = image
     return images
 
+
 def load_face_landmarks(root, verbose=True):
     """Load face landmarks created by `detect_face_landmarks()`
     :param root: (str) Path to folder containing CSV landmark files
     :param verbose: (bool) Toggle verbosity
     :output landmarks: (list)
     """
-    #List all files in the directory and read points from text files one by one
+    # List all files in the directory and read points from text files one by one
     all_paths = glob.glob(root.strip("/") + "/*_landmarks*")
     print(all_paths)
     landmarks = []
@@ -93,11 +130,10 @@ def load_face_landmarks(root, verbose=True):
         landmarks.append(points)
     return landmarks
 
-def detect_face_landmarks(images,
-                          save_landmarks=True,
-                          max_faces=1,
-                          verbose=True,
-                          print_freq=0.10):
+
+def detect_face_landmarks(
+    images, save_landmarks=True, max_faces=1, verbose=True, print_freq=0.10
+):
     """Detect and save the face landmarks for each image
     :param images: (dict) Dict of image files and arrays from `load_images()`.
     :param save_landmarks: (bool) Save landmarks to .CSV
@@ -121,7 +157,7 @@ def detect_face_landmarks(images,
             print(f"({n + 1} / {num_images}): {file}")
 
         # Try to detect a face in the image
-        imageForDlib = dlib.load_rgb_image(file) # Kludge for now
+        imageForDlib = dlib.load_rgb_image(file)  # Kludge for now
         found_faces = detector(imageForDlib)
 
         # Only save landmarks when num_faces = 1
@@ -151,14 +187,17 @@ def detect_face_landmarks(images,
         print(f"Skipped {100 * (num_skips / num_images):.1f}% of images.")
     return all_landmarks, all_faces
 
-def create_average_face(faces,
-                        landmarks,
-                        output_dims=(600, 600),
-                        save_image=True,
-                        output_file="average_face.jpg",
-                        return_intermediates=False,
-                        verbose=True,
-                        print_freq=0.05):
+
+def create_average_face(
+    faces,
+    landmarks,
+    output_dims=(600, 600),
+    save_image=True,
+    output_file="average_face.jpg",
+    return_intermediates=False,
+    verbose=True,
+    print_freq=0.05,
+):
     """Combine the faces into an average face"""
     if verbose:
         print(f"\nStarting face averaging for {len(faces)} faces.")
@@ -169,19 +208,22 @@ def create_average_face(faces,
     num_images = len(faces)
     n = len(landmarks[0])
     w, h = output_dims
-    eyecornerDst = [(int(0.3 * w), int(h / 3)),
-                    (int(0.7 * w), int(h / 3))]
+    eyecornerDst = [(int(0.3 * w), int(h / 3)), (int(0.7 * w), int(h / 3))]
     imagesNorm, pointsNorm = [], []
 
     # Add boundary points for delaunay triangulation
-    boundaryPts = np.array([(0,0),
-                            (w / 2, 0),
-                            (w - 1, 0),
-                            (w - 1, h / 2),
-                            (w - 1, h - 1),
-                            (w / 2, h - 1),
-                            (0, h - 1),
-                            (0, h / 2)])
+    boundaryPts = np.array(
+        [
+            (0, 0),
+            (w / 2, 0),
+            (w - 1, 0),
+            (w - 1, h / 2),
+            (w - 1, h - 1),
+            (w / 2, h - 1),
+            (0, h - 1),
+            (0, h / 2),
+        ]
+    )
 
     # Initialize location of average points to 0s
     pointsAvg = np.array([(0, 0)] * (n + len(boundaryPts)), np.float32())
@@ -196,7 +238,7 @@ def create_average_face(faces,
 
         # Corners of the eye in input image
         points1 = landmarks[i]
-        eyecornerSrc  = [landmarks[i][36], landmarks[i][45]]
+        eyecornerSrc = [landmarks[i][36], landmarks[i][45]]
 
         # Compute similarity transform
         tform = similarityTransform(eyecornerSrc, eyecornerDst)
@@ -243,7 +285,6 @@ def create_average_face(faces,
             if return_intermediates:
                 incremental.append((output + img) / (i + 1))
 
-
             # Add image intensities for averaging
             output = output + img
 
@@ -253,21 +294,19 @@ def create_average_face(faces,
         if return_intermediates:
             warped.append(img_affine)
     incremental = incremental[-num_images:]
-    print('Done.')
+    print("Done.")
 
     # Save the output image to disk
     if save_image:
         cv2.imwrite(output_file, 255 * output[..., ::-1])
-    if return_intermediates: # For animated GIFs
+    if return_intermediates:  # For animated GIFs
         return output, warped, incremental, imagesNorm
     return output
 
-def create_average_face_from_directory(dir_in,
-                                       dir_out,
-                                       filename,
-                                       save_image=True,
-                                       verbose=True,
-                                       return_intermediates=False):
+
+def create_average_face_from_directory(
+    dir_in, dir_out, filename, save_image=True, verbose=True, return_intermediates=False
+):
     if verbose:
         print(f"Directory: {dir_in}")
     images = load_images(dir_in, verbose=verbose)
@@ -282,32 +321,39 @@ def create_average_face_from_directory(dir_in,
     # Use  the detected landmarks to create an average face
     fn = f"average_face_{filename}.jpg"
     fp = os.path.join(dir_out, fn).replace(" ", "_")
-    average_face = create_average_face(faces,
-                                       landmarks,
-                                       output_file=fp,
-                                       save_image=True,
-                                       return_intermediates=return_intermediates)
+    average_face = create_average_face(
+        faces,
+        landmarks,
+        output_file=fp,
+        save_image=True,
+        return_intermediates=return_intermediates,
+    )
 
     # Save a labeled version of the average face
     if save_image:
         save_labeled_face_image(average_face, filename, dir_out)
     return average_face
 
+
 def save_labeled_face_image(image, name, dir_out="./", label=""):
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.imshow(image)
 
     # Add a title
-    kwargs = {"fontsize": 20, "fontweight": "heavy",
-              "color": "gray", "alpha":0.9}
+    kwargs = {"fontsize": 20, "fontweight": "heavy", "color": "gray", "alpha": 0.9}
     title = f"{name} average face"
     ax.set_title(title, **kwargs)
 
     # Touch up the image
-    ax.set(**{"xlabel": '', "ylabel": '', "xticks": [], "yticks": []})
+    ax.set(**{"xlabel": "", "ylabel": "", "xticks": [], "yticks": []})
     plt.tight_layout()
-    kwargs = {'fontsize': 17, 'color': 'black', 'weight': 'heavy',
-              'alpha': 0.6, 'ha': 'right'}
+    kwargs = {
+        "fontsize": 17,
+        "color": "black",
+        "weight": "heavy",
+        "alpha": 0.6,
+        "ha": "right",
+    }
     x, y = image.shape[:2]
     x, y = 0.98 * x, 0.97 * y
     ax.text(x, y, label, **kwargs)
@@ -318,15 +364,25 @@ def save_labeled_face_image(image, name, dir_out="./", label=""):
     fig.savefig(fp, dpi=300)
     return
 
+
 def create_animated_gif(path_to_images, save_gif=True, verbose=True):
     """Create an animated face average GIF from a directory of images"""
-    def save_to_file(gif, fn=None, fps=None, verbose=True):
+
+    def save_to_file(gif: animation.FuncAnimation, fn=None, fps=None, verbose=True):
         fn = "animation" if not fn else fn
         if not fps:
-            fps = (1e3 / gif._interval)
+            fps = 1e3 / gif._interval
         if verbose:
             print(fn)
-        gif.save(f'./{fn}.gif', writer='imagemagick', fps=fps)
+        writers = [
+            "pillow",
+            "ffmpeg",
+            "ffmpeg_file",
+            "imagemagick",
+            "imagemagick_file",
+            "html",
+        ]
+        gif.save(f"./{fn}.mov", writer="ffmpeg", fps=fps)
         if verbose:
             print("Done saving the GIF.")
 
@@ -337,11 +393,9 @@ def create_animated_gif(path_to_images, save_gif=True, verbose=True):
     landmarks, faces = detect_face_landmarks(images, verbose=verbose)
 
     # Create the average face and interim images
-    averaged, warped, incremental, raw = create_average_face(faces,
-                                                             landmarks,
-                                                             return_intermediates=True,
-                                                             save_image=False,
-                                                             verbose=verbose)
+    averaged, warped, incremental, raw = create_average_face(
+        faces, landmarks, return_intermediates=True, save_image=False, verbose=verbose
+    )
 
     # Create the animation
     def tight(**kwargs):
@@ -354,9 +408,9 @@ def create_animated_gif(path_to_images, save_gif=True, verbose=True):
     kwargs = {"fontsize": 18, "color": "white", "alpha": 1.0, "weight": "heavy"}
     for ax, title in zip(axs, titles):
         lines.append(ax.imshow(np.zeros_like(warped[0])))
-        ax.axis('off')
+        ax.axis("off")
         ax.set_title(title, fontsize=18)
-    k = dict(pad=0, w_pad=0, h_pad=0) # Layout values
+    k = dict(pad=0, w_pad=0, h_pad=0)  # Layout values
     tight(**k)
 
     # initialization function: plot the background of each frame
@@ -377,12 +431,14 @@ def create_animated_gif(path_to_images, save_gif=True, verbose=True):
         return lines
 
     # Call the animator
-    anim = animation.FuncAnimation(fig,
-                                   animate,
-                                   init_func=init,
-                                   frames=round(1.5 * len(raw)),
-                                   interval=500,
-                                   blit=True)
+    anim = animation.FuncAnimation(
+        fig,
+        animate,
+        init_func=init,
+        frames=round(1.5 * len(raw)),
+        interval=500,
+        blit=True,
+    )
 
     # Save the animation
     if save_gif:
