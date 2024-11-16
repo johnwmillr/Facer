@@ -1,4 +1,3 @@
-from typing import NamedTuple
 import cv2
 import dlib
 import matplotlib.pyplot as plt
@@ -6,6 +5,12 @@ from matplotlib import animation
 import numpy as np
 import os
 import glob
+
+from facer.types import (
+    Detector,
+    Predictor,
+    DlibImage,
+)
 
 from facer.utils import (
     similarityTransform,
@@ -17,12 +22,12 @@ from facer.utils import (
 
 # https://www.learnopencv.com/facial-landmark-detection/
 # https://www.learnopencv.com/average-face-opencv-c-python-tutorial/
-def load_face_detector():
+def load_face_detector() -> Detector:
     """Loads the dlib face detector"""
     return dlib.get_frontal_face_detector()
 
 
-def load_landmark_predictor(predictor_path: str):
+def load_landmark_predictor(predictor_path: str) -> Predictor:
     return dlib.shape_predictor(predictor_path)
 
 
@@ -89,12 +94,12 @@ def glob_image_files(root: str, extensions=["jpg", "jpeg", "png"]) -> list[str]:
 
 
 def load_images(root: str, verbose: bool = True) -> dict[str, np.ndarray]:
-    """Returns list of image arrays
+    """Returns a dictionary of image arrays
     :param root: (str) Directory containing face images
     :param verbose: (bool) Toggle verbosity
     :output images: (dict) Dict of OpenCV image arrays, key is filename
     """
-    files = sorted(glob_image_files(root))[:5]
+    files = sorted(glob_image_files(root))[:3]
     num_files = len(files)
     if verbose:
         print(f"\nFound {num_files} in '{root}'.")
@@ -107,7 +112,7 @@ def load_images(root: str, verbose: bool = True) -> dict[str, np.ndarray]:
             print(f"({n + 1} / {num_files}): {file}")
 
         image = cv2.imread(file)[..., ::-1]
-        image = np.float32(image) / 255.0
+        image = image.astype(np.float32) / 255.0
         images[file] = image
     return images
 
@@ -168,7 +173,7 @@ def detect_face_landmarks(
             print(f"({n + 1} / {num_images}): {file}")
 
         # Try to detect a face in the image
-        imageForDlib = dlib.load_rgb_image(file)  # Kludge for now
+        imageForDlib: DlibImage = dlib.load_rgb_image(file)  # Kludge for now
         found_faces = detector(imageForDlib)
 
         # Only save landmarks when num_faces = 1
