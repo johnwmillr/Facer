@@ -12,6 +12,6 @@ __author__ = "John W. Miller"
 __url__ = "https://github.com/johnwmillr/facer"
 __description__ = "Face averaging in Python made simple"
 __license__ = "MIT"
-__version__ = "0.6.2"
+__version__ = "0.6.3"
 
 print("Loading face detector and landmark prediction models...")

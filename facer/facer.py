@@ -94,7 +94,7 @@ def load_images(root: str, verbose: bool = True) -> dict[str, np.ndarray]:
     :param verbose: (bool) Toggle verbosity
     :output images: (dict) Dict of OpenCV image arrays, key is filename
     """
-    files = sorted(glob_image_files(root))[:5]
+    files = sorted(glob_image_files(root))
     num_files = len(files)
     if verbose:
         print(f"\nFound {num_files} in '{root}'.")
