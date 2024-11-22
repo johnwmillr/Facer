@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "average-facer"
-version = "0.6.3"
+version = "0.7.0"
 description = "Face averaging in Python made simple."
 authors = ["John William Ruth Miller <john.w.millr@gmail.com>"]
 license = "MIT"
@@ -29,6 +29,7 @@ matplotlib = "3.9.2"
 black = ">=23,<25"
 jupyterlab = "^4.3.0"
 mypy = "^1.13.0"
+flake8 = "^7.1.0"
 
 [build-system]
 requires = ["poetry-core"]
