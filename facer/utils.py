@@ -1,6 +1,14 @@
+import math
+
 import cv2
 import numpy as np
-import math
+from cv2.typing import MatLike, Rect
+from numpy.typing import NDArray
+
+PointT = tuple[int, int]
+
+# https://www.learnopencv.com/facial-landmark-detection/
+# https://www.learnopencv.com/average-face-opencv-c-python-tutorial/
 
 #   --------------------------------------------------------   #
 #            IMAGE ALIGNMENT AND AVERAGING FUNCTIONS           #
@@ -8,13 +16,13 @@ import math
 
 
 # Compute similarity transform given two sets of two points.
-# OpenCV requires 3 pairs of corresponding points.
+# cv2.warpAffine requires 3 pairs of corresponding points.
 # We are faking the third one.
-def similarityTransform(inPoints, outPoints):
+def similarityTransform(inPoints: list[PointT], outPoints: list[PointT]) -> MatLike:
     s60 = math.sin(60 * math.pi / 180)
     c60 = math.cos(60 * math.pi / 180)
-    inPts = np.copy(inPoints).tolist()
-    outPts = np.copy(outPoints).tolist()
+    inPts: list[list[int]] = np.copy(inPoints).tolist()
+    outPts: list[list[int]] = np.copy(outPoints).tolist()
 
     xin = (
         c60 * (inPts[0][0] - inPts[1][0])
@@ -39,9 +47,8 @@ def similarityTransform(inPoints, outPoints):
         + outPts[1][1]
     )
     outPts.append([int(xout), int(yout)])
-
     tform = cv2.estimateAffinePartial2D(np.array([inPts]), np.array([outPts]))
-    return cv2.UMat(tform[0])
+    return cv2.UMat(tform[0])  # type: ignore
 
 
 # Check if a point is inside a rectangle
@@ -64,9 +71,13 @@ def constrainPoint(p, w, h):
 
 # Apply affine transform calculated using srcTri and dstTri to src and
 # output an image of size.
-def applyAffineTransform(src, srcTri, dstTri, size):
+def applyAffineTransform(
+    src: MatLike, srcTri: list[PointT], dstTri: list[PointT], size: tuple[int, int]
+) -> MatLike:
     # Given a pair of triangles, find the affine transform.
-    warpMat = cv2.getAffineTransform(np.float32(srcTri), np.float32(dstTri))
+    warpMat = cv2.getAffineTransform(
+        np.array(srcTri, dtype=np.float32), np.array(dstTri, dtype=np.float32)
+    )
 
     # Apply the Affine Transform just found to the src image
     dst = cv2.warpAffine(
@@ -80,7 +91,9 @@ def applyAffineTransform(src, srcTri, dstTri, size):
     return dst
 
 
-def calculateDelaunayTriangles(rect, points):
+def calculateDelaunayTriangles(
+    rect: Rect, points: NDArray[np.float32]
+) -> list[tuple[int, int, int]]:
     # Insert points into subdiv
     subdiv = cv2.Subdiv2D(rect)
     for p in points:
@@ -125,13 +138,17 @@ def calculateDelaunayTriangles(rect, points):
 
 
 # Warps and alpha blends triangular regions from img1 and img2 to img
-def warpTriangle(img1, img2, t1, t2):
+def warpTriangle(
+    img1: MatLike, img2: MatLike, t1: list[PointT], t2: list[PointT]
+) -> MatLike:
     # Find bounding rectangle for each triangle
-    r1 = cv2.boundingRect(np.float32([t1]))
-    r2 = cv2.boundingRect(np.float32([t2]))
+    r1 = cv2.boundingRect(np.array([t1], dtype=np.float32))
+    r2 = cv2.boundingRect(np.array([t2], dtype=np.float32))
 
     # Offset points by left top corner of the respective rectangles
-    t1Rect, t2Rect, t2RectInt = [], [], []
+    t1Rect: list[PointT] = []
+    t2Rect: list[PointT] = []
+    t2RectInt: list[PointT] = []
     for i in range(0, 3):
         t1Rect.append(((t1[i][0] - r1[0]), (t1[i][1] - r1[1])))
         t2Rect.append(((t2[i][0] - r2[0]), (t2[i][1] - r2[1])))
@@ -139,7 +156,9 @@ def warpTriangle(img1, img2, t1, t2):
 
     # Get mask by filling triangle
     mask = np.zeros((r2[3], r2[2], 3), dtype=np.float32)
-    cv2.fillConvexPoly(mask, np.int32(t2RectInt), (1.0, 1.0, 1.0), 16, 0)
+    cv2.fillConvexPoly(
+        mask, np.array(t2RectInt, dtype=np.int32), (1.0, 1.0, 1.0), 16, 0
+    )
 
     # Apply warpImage to small rectangular patches
     img1Rect = img1[r1[1] : r1[1] + r1[3], r1[0] : r1[0] + r1[2]]
