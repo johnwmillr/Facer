@@ -6,10 +6,12 @@ NUM_IMAGES = 4
 NUM_FACE_IMAGES = 3
 ROOT = "./tests/images"
 
+
 @pytest.fixture(scope="module")
 def setup():
     print("\n---------------------\nSetting up Facer tests...\n")
     return ROOT
+
 
 def test_image_file_globbing(setup):
     msg = "Files names were not ingested properly."
@@ -18,6 +20,7 @@ def test_image_file_globbing(setup):
     expected = [os.path.join(setup, name) for name in names]
     assert sorted(files) == sorted(expected), msg
 
+
 def test_load_images(setup):
     msg = "Incorrect number of images loaded."
     kwargs = {"verbose": True}
@@ -25,11 +28,13 @@ def test_load_images(setup):
     expected = NUM_IMAGES * [[]]
     assert len(images.keys()) == len(expected), msg
 
+
 def test_load_face_landmarks(setup):
     msg = "Couldn't load landmarks."
     landmarks = facer.load_face_landmarks(setup)
     expected = NUM_FACE_IMAGES * [[]]
     assert len(landmarks) == len(expected), msg
+
 
 def test_detect_face_landmarks(setup):
     msg = "Incorrect number of face landmarks found."
@@ -38,6 +43,7 @@ def test_detect_face_landmarks(setup):
     landmarks, faces = facer.detect_face_landmarks(images, **kwargs)
     expected = NUM_FACE_IMAGES * [[]]
     assert len(landmarks) == len(expected), msg
+
 
 # def test_create_average_face(setup):
 #     msg = "Failed to create the average face."
