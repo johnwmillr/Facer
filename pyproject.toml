@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "average-facer"
-version = "0.7.2"
+version = "0.7.3"
 description = "Face averaging in Python made simple."
 authors = ["John William Ruth Miller <john.w.millr@gmail.com>"]
 license = "MIT"
