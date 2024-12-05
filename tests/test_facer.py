@@ -1,6 +1,9 @@
 import os
+
 import pytest
+
 from facer import facer
+from facer.utils import rectContains
 
 NUM_IMAGES = 4
 NUM_FACE_IMAGES = 3
@@ -13,7 +16,7 @@ def setup():
     return ROOT
 
 
-def test_image_file_globbing(setup):
+def test_image_file_globbing(setup: str) -> None:
     msg = "Files names were not ingested properly."
     files = facer.glob_image_files(setup)
     names = ["dawn-beatty.jpg", "github.jpg", "kyle-daigle.jpg", "thomas-dohmke.jpg"]
@@ -21,39 +24,46 @@ def test_image_file_globbing(setup):
     assert sorted(files) == sorted(expected), msg
 
 
-def test_load_images(setup):
+def test_load_images(setup: str) -> None:
     msg = "Incorrect number of images loaded."
-    kwargs = {"verbose": True}
-    images = facer.load_images(setup, **kwargs)
-    expected = NUM_IMAGES * [[]]
-    assert len(images.keys()) == len(expected), msg
+    images = facer.load_images(setup, verbose=False)
+    assert len(images.keys()) == NUM_IMAGES, msg
 
 
-def test_load_face_landmarks(setup):
+def test_load_face_landmarks(setup: str) -> None:
     msg = "Couldn't load landmarks."
     landmarks = facer.load_face_landmarks(setup)
-    expected = NUM_FACE_IMAGES * [[]]
-    assert len(landmarks) == len(expected), msg
+    assert len(landmarks) == NUM_FACE_IMAGES, msg
 
 
-def test_detect_face_landmarks(setup):
+def test_detect_face_landmarks(setup: str) -> None:
     msg = "Incorrect number of face landmarks found."
-    kwargs = {"save_landmarks": True, "verbose": True, "max_faces": 10}
     images = facer.load_images(setup, verbose=False)
-    landmarks, faces = facer.detect_face_landmarks(images, **kwargs)
-    expected = NUM_FACE_IMAGES * [[]]
-    assert len(landmarks) == len(expected), msg
+    landmarks, _ = facer.detect_face_landmarks(
+        images, save_landmarks=True, verbose=False, max_faces=10
+    )
+    assert len(landmarks) == NUM_FACE_IMAGES, msg
 
 
-# def test_create_average_face(setup):
-#     msg = "Failed to create the average face."
-#     faces = self.faces
-#     landmarks = self.landmarks
-#     kwargs = {"save_image": False}
-#     average_face = facer.create_average_face(faces, landmarks, **kwargs)
-#     assert average_face != [], msg
+@pytest.mark.parametrize(
+    ["point", "is_contained"],
+    [[(0, 0), True], [(50, 50), True], [(100, 100), True], [(101, 101), False]],
+)
+def test_rectContains(point: tuple[float, float], is_contained: bool) -> None:
+    rect = (0, 0, 100, 100)
+    assert rectContains(rect, point) == is_contained
 
-# def test_create_animated_gif(setup):
-#     msg = "Failed to create an animated GIF."
-#     input_dir = "./tests/images"
-#     facer.test_create_animated_gif(input_dir)
+
+@pytest.mark.parametrize(
+    ["point", "w", "h", "constrained_point"],
+    [
+        [(0, 0), 100, 100, (0, 0)],
+        [(50, 50), 100, 100, (50, 50)],
+        [(100, 100), 100, 100, (99, 99)],
+        [(101, 101), 100, 100, (99, 99)],
+    ],
+)
+def test_constrainPoint(
+    point: tuple[int, int], w: int, h: int, constrained_point: tuple[int, int]
+) -> None:
+    assert facer.constrainPoint(point, w, h) == constrained_point
