@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "average-facer"
-version = "0.7.2"
+version = "0.7.3"
 description = "Face averaging in Python made simple."
 authors = ["John William Ruth Miller <john.w.millr@gmail.com>"]
 license = "MIT"
@@ -31,6 +31,7 @@ black = ">=23,<25"
 jupyterlab = "^4.3.0"
 mypy = "^1.13.0"
 flake8 = "^7.1.0"
+pytest = "^8.3"
 
 [tool.mypy]
 # Specify the target platform details in config, so your developers are
