@@ -3,7 +3,8 @@ import math
 import cv2
 import numpy as np
 from cv2.typing import MatLike, Rect
-from numpy.typing import NDArray
+
+from facer.typing import NumPyNumericArray
 
 PointT = tuple[int, int]
 
@@ -52,7 +53,7 @@ def similarityTransform(inPoints: list[PointT], outPoints: list[PointT]) -> MatL
 
 
 # Check if a point is inside a rectangle
-def rectContains(rect, point):
+def rectContains(rect: Rect, point: tuple[float, float]) -> bool:
     if point[0] < rect[0]:
         return False
     if point[1] < rect[1]:
@@ -64,9 +65,8 @@ def rectContains(rect, point):
     return True
 
 
-def constrainPoint(p, w, h):
-    p = (min(max(p[0], 0), w - 1), min(max(p[1], 0), h - 1))
-    return p
+def constrainPoint(p: PointT, w: int, h: int) -> PointT:
+    return (min(max(p[0], 0), w - 1), min(max(p[1], 0), h - 1))
 
 
 # Apply affine transform calculated using srcTri and dstTri to src and
@@ -92,7 +92,7 @@ def applyAffineTransform(
 
 
 def calculateDelaunayTriangles(
-    rect: Rect, points: NDArray[np.float32]
+    rect: Rect, points: NumPyNumericArray
 ) -> list[tuple[int, int, int]]:
     # Insert points into subdiv
     subdiv = cv2.Subdiv2D(rect)

@@ -1,7 +1,11 @@
 from abc import abstractmethod
-from typing import Callable, Iterable, Iterator
+from typing import Any, Callable, Iterable, Iterator
 
+import numpy as np
 from numpy.typing import NDArray
+
+
+NumPyNumericArray = NDArray[np.integer[Any] | np.floating[Any]]
 
 """http://dlib.net/python/index.html"""
 
@@ -41,7 +45,7 @@ class Points:
 
     def __init__(self, arg0: "Points") -> None: ...
 
-    def __init__(self, arg0: Iterable) -> None: ...
+    def __init__(self, arg0: Iterable["Points"]) -> None: ...
 
     def __init__(self, initial_size: int) -> None: ...
 
@@ -65,7 +69,7 @@ class Points:
         ...
 
     @abstractmethod
-    def extend(self, arg0: list) -> None: ...
+    def extend(self, arg0: list["Points"]) -> None: ...
 
     def insert(self, i: int, x: Point) -> None:
         """Insert an item at a given position."""
@@ -132,5 +136,5 @@ class FullObjectDetection:
     def parts(self) -> Points: ...
 
 
-Detector = Callable[[NDArray], list[Rectangle]]
-Predictor = Callable[[NDArray, Rectangle], FullObjectDetection]
+Detector = Callable[[NumPyNumericArray], list[Rectangle]]
+Predictor = Callable[[NumPyNumericArray, Rectangle], FullObjectDetection]
