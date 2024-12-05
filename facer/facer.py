@@ -1,6 +1,6 @@
 import glob
 import os
-from typing import cast
+from typing import Any, Iterable, cast
 
 import cv2
 import dlib
@@ -8,9 +8,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from cv2.typing import MatLike
 from matplotlib.animation import FuncAnimation
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from matplotlib.image import AxesImage
 from numpy.typing import NDArray
 
-from facer.typing import Detector, Points, Predictor, Rectangle
+from facer.typing import Detector, NumPyNumericArray, Points, Predictor, Rectangle
 from facer.utils import (
     calculateDelaunayTriangles,
     constrainPoint,
@@ -18,21 +21,23 @@ from facer.utils import (
     warpTriangle,
 )
 
+PointT = tuple[int, int]
+
 
 # https://www.learnopencv.com/facial-landmark-detection/
 # https://www.learnopencv.com/average-face-opencv-c-python-tutorial/
 def load_face_detector() -> Detector:
     """Loads the dlib face detector"""
-    return dlib.get_frontal_face_detector()  # type: ignore[attr-defined]
+    return dlib.get_frontal_face_detector()  # type: ignore[no-any-return]
 
 
 def load_landmark_predictor(predictor_path: str) -> Predictor:
-    return dlib.shape_predictor(predictor_path)  # type: ignore[attr-defined]
+    return dlib.shape_predictor(predictor_path)  # type: ignore[no-any-return]
 
 
 def load_rgb_image(filename: str) -> NDArray[np.uint8]:
     """Takes a path and returns a numpy array (RGB) containing the image"""
-    return dlib.load_rgb_image(filename)  # type: ignore[attr-defined]
+    return dlib.load_rgb_image(filename)  # type: ignore[no-any-return]
 
 
 # Load the face detector and landmark predictor
@@ -76,7 +81,7 @@ def plot_face_rectangle(
 
 
 def plot_face_landmarks(
-    points: Points, color: str = "red", style: str = ".", **kwargs
+    points: Points, color: str = "red", style: str = ".", **kwargs: Any
 ) -> None:
     for point in points:
         try:
@@ -101,7 +106,7 @@ def glob_image_files(root: str, extensions: list[str] | None = None) -> list[str
     return [f for f in files if f.rsplit(".", 1)[-1].lower() in extensions]
 
 
-def load_images(root: str, verbose: bool = True) -> dict[str, NDArray[np.float32]]:
+def load_images(root: str, verbose: bool = True) -> dict[str, MatLike]:
     """Returns a dictionary of image arrays
     :param root: (str) Directory containing face images
     :param verbose: (bool) Toggle verbosity
@@ -114,7 +119,7 @@ def load_images(root: str, verbose: bool = True) -> dict[str, NDArray[np.float32
         N = max(round(0.10 * num_files), 1)
 
     # Load the images
-    images = {}
+    images: dict[str, MatLike] = {}
     for n, file in enumerate(files):
         if verbose and n % N == 0:
             print(f"({n + 1} / {num_files}): {file}")
@@ -123,9 +128,6 @@ def load_images(root: str, verbose: bool = True) -> dict[str, NDArray[np.float32
         image = image.astype(np.float32) / 255.0
         images[file] = image
     return images
-
-
-PointT = tuple[int, int]
 
 
 def load_face_landmarks(root: str, verbose: bool = True) -> list[list[PointT]]:
@@ -151,7 +153,7 @@ def load_face_landmarks(root: str, verbose: bool = True) -> list[list[PointT]]:
 
 
 def detect_face_landmarks(
-    images: dict[str, NDArray[np.float32]],
+    images: dict[str, MatLike],
     save_landmarks: bool = True,
     max_faces: int = 1,
     verbose: bool = True,
@@ -175,7 +177,7 @@ def detect_face_landmarks(
     # Look for face landmarks in each image
     num_skips = 0
     all_landmarks: list[list[PointT]] = []
-    all_faces: list[np.ndarray] = []
+    all_faces: list[MatLike] = []
     for n, (file, image) in enumerate(images.items()):
         if verbose and n % N == 0:
             print(f"({n + 1} / {num_images}): {file}")
@@ -240,7 +242,7 @@ def create_average_face(
     w, h = output_dims
     eyecornerDst = [(int(0.3 * w), int(h / 3)), (int(0.7 * w), int(h / 3))]
     imagesNorm: list[MatLike] = []
-    pointsNorm: list[np.ndarray] = []
+    pointsNorm: list[MatLike] = []
 
     # Add boundary points for delaunay triangulation
     boundaryPts = np.array(
@@ -254,16 +256,16 @@ def create_average_face(
             (0, h - 1),
             (0, h / 2),
         ]
-    )
+    ).astype(np.float32)
 
     # Initialize location of average points to 0s
-    pointsAvg = np.array([(0, 0)] * (n + len(boundaryPts)), np.float32())
+    pointsAvg = np.array([(0, 0)] * (n + len(boundaryPts))).astype(np.float32)
 
     # Warp images and transform landmarks to output coordinate system,
     # and find average of transformed landmarks.
     output: MatLike | None = None
     warped: list[MatLike] = []
-    incremental: list[MatLike] = []
+    incremental: list[NumPyNumericArray] = []
     N = max(round(print_freq * num_images), 1)
     for i in range(0, num_images):
         if verbose and i % N == 0:
@@ -299,7 +301,7 @@ def create_average_face(
         dt = calculateDelaunayTriangles(rect, np.array(pointsAvg, dtype=np.float32))
 
         # Warp input images to average image landmarks
-        output = np.zeros((h, w, 3), np.float32)
+        output = np.zeros((h, w, 3)).astype(np.float32)
         for i in range(0, len(imagesNorm)):
             img: MatLike = np.zeros((h, w, 3), np.float32)
             # Transform triangles one by one
@@ -314,10 +316,10 @@ def create_average_face(
                     tout.append(pOut)
                 img = warpTriangle(imagesNorm[i], img, tin, tout)
             if return_intermediates:
-                incremental.append((output + img) / (i + 1))
+                incremental.append(((output + img) / (i + 1)).astype(np.float32))
 
             # Add image intensities for averaging
-            output = output + img
+            output = (output + img).astype(np.float32)
 
         # Divide by num_images to get average
         output = output / num_images
@@ -343,7 +345,7 @@ def create_average_face_from_directory(
     save_image: bool = True,
     verbose: bool = True,
     return_intermediates: bool = False,
-) -> np.ndarray | None:
+) -> MatLike | None:
     if verbose:
         print(f"Directory: {dir_in}")
     images = load_images(dir_in, verbose=verbose)
@@ -374,7 +376,7 @@ def create_average_face_from_directory(
 
 
 def save_labeled_face_image(
-    image: NDArray, name: str, dir_out: str = "./", label: str = ""
+    image: MatLike, name: str, dir_out: str = "./", label: str = ""
 ) -> None:
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.imshow(image)
@@ -439,12 +441,13 @@ def create_animated_gif(
     assert raw is not None
 
     # Create the animation
-    def tight(**kwargs):
+    def tight(**kwargs: Any) -> None:
         plt.tight_layout(**kwargs)
 
     # Make the plot
-    fig, axs = plt.subplots(1, 2, figsize=(6, 3.7))
-    lines = []
+    subplots: tuple[Figure, Iterable[Axes]] = plt.subplots(1, 2, figsize=(6, 3.7))
+    fig, axs = subplots
+    lines: list[AxesImage] = []
     titles = ["Individual", "Averaged"]
     for ax, title in zip(axs, titles):
         lines.append(ax.imshow(np.zeros_like(warped[0])))
@@ -454,7 +457,7 @@ def create_animated_gif(
     tight(**k)
 
     # initialization function: plot the background of each frame
-    def init():
+    def init() -> list[AxesImage]:
 
         for line in lines:
             line.set_data(np.zeros_like(raw[0]))
@@ -462,7 +465,7 @@ def create_animated_gif(
         return lines
 
     # animation function. This is called sequentially
-    def animate(i):
+    def animate(i: int) -> list[AxesImage]:
         num_raw = len(raw)
         i = min(num_raw - 1, i)
         orig, average = lines
