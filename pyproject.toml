@@ -15,6 +15,7 @@ keywords = [
     "face-average",
     "facer",
     "face-averaging",
+    "average-facer",
 ]
 
 packages = [{ include = "facer" }]
@@ -46,3 +47,8 @@ ignore_missing_imports = true
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.urls]
+"Blog Post" = "https://www.johnwmillr.com/average-faces-in-python/"
+"Faces of Fortune" = "https://www.johnwmillr.com/faces-of-fortune/"
+"PyPI" = "https://pypi.org/project/average-facer/"
