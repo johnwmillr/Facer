@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "average-facer"
-version = "0.7.3"
+version = "0.7.4"
 description = "Face averaging in Python made simple."
 authors = ["John William Ruth Miller <john.w.millr@gmail.com>"]
 license = "MIT"
@@ -25,6 +25,7 @@ opencv-python = "^4"
 dlib = "^19"
 matplotlib = "^3"
 ffmpeg-python = "^0.2"
+tqdm = "^4"
 
 [tool.poetry.group.dev.dependencies]
 black = ">=23,<25"

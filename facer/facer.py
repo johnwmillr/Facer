@@ -11,7 +11,7 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.image import AxesImage
-from numpy.typing import NDArray
+from tqdm import tqdm
 
 from facer.typing import Detector, NumPyNumericArray, Points, Predictor, Rectangle
 from facer.utils import (
@@ -35,7 +35,7 @@ def load_landmark_predictor(predictor_path: str) -> Predictor:
     return dlib.shape_predictor(predictor_path)  # type: ignore[no-any-return]
 
 
-def load_rgb_image(filename: str) -> NDArray[np.uint8]:
+def load_rgb_image(filename: str) -> NumPyNumericArray:
     """Takes a path and returns a numpy array (RGB) containing the image"""
     return dlib.load_rgb_image(filename)  # type: ignore[no-any-return]
 
@@ -115,26 +115,25 @@ def load_images(root: str, verbose: bool = True) -> dict[str, MatLike]:
     files = sorted(glob_image_files(root))
     num_files = len(files)
     if verbose:
-        print(f"\nFound {num_files} in '{root}'.")
-        N = max(round(0.10 * num_files), 1)
+        print(f"\nFound {num_files} images in '{root}'.")
 
     # Load the images
     images: dict[str, MatLike] = {}
-    for n, file in enumerate(files):
-        if verbose and n % N == 0:
-            print(f"({n + 1} / {num_files}): {file}")
-
+    for file in files:
         image = cv2.imread(file)[..., ::-1]
         image = image.astype(np.float32) / 255.0
         images[file] = image
     return images
 
 
-def load_face_landmarks(root: str, verbose: bool = True) -> list[list[PointT]]:
-    """Load face landmarks created by `detect_face_landmarks()`
-    :param root: Path to folder containing CSV landmark files
-    :param verbose: Toggle verbosity
-    :output landmarks: List of landmarks for each face.
+def load_face_landmarks(root: str) -> list[list[PointT]]:
+    """Load face landmarks created by `detect_face_landmarks()`.
+
+    Args:
+        root: Path to folder containing CSV landmark files.
+
+    Returns:
+        List of landmarks for each face.
     """
     # List all files in the directory and read points from text files one by one
     all_paths = glob.glob(root.strip("/") + "/*_landmarks*")
@@ -159,14 +158,18 @@ def detect_face_landmarks(
     verbose: bool = True,
     print_freq: float = 0.10,
 ) -> tuple[list[list[PointT]], list[MatLike]]:
-    """Detect and save the face landmarks for each image
-    :param images: Dict of image files and arrays from `load_images()`.
-    :param save_landmarks: Save landmarks to .CSV
-    :param max_faces: Skip images with too many faces found.
-    :param verbose: Toggle verbosity
-    :param print_freq: How often do you want print statements?
-    :output landmarks: 68 landmarks for each found face
-    :output faces: List of the detected face images
+    """Detect and save the face landmarks for each image.
+
+    Args:
+        images: Dictionary of image files and arrays from `load_images()`.
+        save_landmarks: Save landmarks to .CSV. Defaults to True.
+        max_faces: Skip images with too many faces found. Defaults to 1.
+        verbose: Toggle verbosity. Defaults to True.
+        print_freq: How often do you want print statements? Defaults to 0.10.
+
+    Returns:
+        landmarks: 68 landmarks for each found face.
+        faces: List of the detected face images.
     """
     num_images = len(images.keys())
     if verbose:
@@ -178,10 +181,7 @@ def detect_face_landmarks(
     num_skips = 0
     all_landmarks: list[list[PointT]] = []
     all_faces: list[MatLike] = []
-    for n, (file, image) in enumerate(images.items()):
-        if verbose and n % N == 0:
-            print(f"({n + 1} / {num_images}): {file}")
-
+    for file, image in tqdm(images.items()) if verbose else images.items():
         # Try to detect a face in the image
         imageForDlib = load_rgb_image(file)
         found_faces = detector(imageForDlib)
@@ -193,7 +193,6 @@ def detect_face_landmarks(
 
         # Find landmarks, save to CSV
         for num, face in enumerate(found_faces):
-            face.bottom()
             landmarks = predictor(imageForDlib, face)
             if not landmarks:
                 continue
@@ -202,8 +201,7 @@ def detect_face_landmarks(
             all_faces.append(image)
 
             # Convert landmarks to list of (x, y) tuples
-            lm = [(point.x, point.y) for point in landmarks.parts()]
-            all_landmarks.append(lm)
+            all_landmarks.append([(point.x, point.y) for point in landmarks.parts()])
 
             # Save landmarks as a CSV file (optional)
             if save_landmarks:
@@ -266,11 +264,7 @@ def create_average_face(
     output: MatLike | None = None
     warped: list[MatLike] = []
     incremental: list[NumPyNumericArray] = []
-    N = max(round(print_freq * num_images), 1)
-    for i in range(0, num_images):
-        if verbose and i % N == 0:
-            print(f"Image {i + 1} / {num_images}")
-
+    for i in tqdm(range(0, num_images)) if verbose else range(0, num_images):
         # Corners of the eye in input image
         points1 = landmarks[i]
         eyecornerSrc = [landmarks[i][36], landmarks[i][45]]
@@ -327,15 +321,14 @@ def create_average_face(
         if return_intermediates:
             warped.append(img_affine)
     incremental = incremental[-num_images:]
-    print("Done.")
+    if verbose:
+        print("Done.")
 
     # Save the output image to disk
     if save_image:
         assert output is not None
         cv2.imwrite(output_file, 255 * output[..., ::-1])
-    if return_intermediates:  # For animated GIFs
-        return output, warped, incremental, imagesNorm
-    return output, None, None, None
+    return output, warped, incremental, imagesNorm
 
 
 def create_average_face_from_directory(
@@ -357,7 +350,7 @@ def create_average_face_from_directory(
     # Detect landmarks for each face
     landmarks, faces = detect_face_landmarks(images, verbose=verbose)
 
-    # Use  the detected landmarks to create an average face
+    # Use the detected landmarks to create an average face
     fn = f"average_face_{filename}.jpg"
     fp = os.path.join(dir_out, fn).replace(" ", "_")
     average_face, _, _, _ = create_average_face(
@@ -369,7 +362,8 @@ def create_average_face_from_directory(
     )
 
     # Save a labeled version of the average face
-    assert average_face is not None
+    if average_face is None:
+        raise ValueError("No average face was created.")
     if save_image:
         save_labeled_face_image(average_face, filename, dir_out)
     return average_face
