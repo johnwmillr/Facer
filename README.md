@@ -28,7 +28,13 @@ The face landmark detection relies on a pre-trained model that must be downloade
 wget http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2
 ```
 
-Unzip the compressed file after it finishes downloading and move it into the `./Facer/model` directory.
+Unzip the compressed file after it finishes downloading and move it into a `./model` directory.
+
+If you store the downloaded file somewhere other than `./model` (or if you use an entirely different model name), you can set a custom model path as an environment variable:
+
+```bash
+export FACER_PREDICTOR_PATH="./custom/path/to/your/model.dat"
+```
 
 ## Usage
 
