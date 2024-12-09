@@ -40,8 +40,14 @@ def load_rgb_image(filename: str) -> NumPyNumericArray:
     return dlib.load_rgb_image(filename)  # type: ignore[no-any-return]
 
 
+# Determine the path to the predictor
+# Set a non-default path by setting the environment variable FACER_PREDICTOR_PATH
+if (PREDICTOR_PATH := os.environ.get("FACER_PREDICTOR_PATH")) is None:
+    PREDICTOR_PATH = "./model/shape_predictor_68_face_landmarks.dat"
+if not os.path.exists(PREDICTOR_PATH):
+    raise FileNotFoundError(f"Couldn't find the predictor at: {PREDICTOR_PATH}")
+
 # Load the face detector and landmark predictor
-PREDICTOR_PATH = "./model/shape_predictor_68_face_landmarks.dat"
 detector = load_face_detector()
 predictor = load_landmark_predictor(PREDICTOR_PATH)
 print("Done, models loaded.")
