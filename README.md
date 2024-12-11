@@ -8,7 +8,7 @@ Facer draws heavily on [this tutorial](https://www.learnopencv.com/average-face-
 
 The image below is an example of Facer's output for one of my posts on [`r/dataisbeautiful`](https://www.reddit.com/r/dataisbeautiful/comments/crxrud/the_average_faces_of_rap_rock_and_country/).
 
-[![Average faces of rap, rock, and country music](assets/average_face_example.png)](https://www.reddit.com/r/dataisbeautiful/comments/crxrud/the_average_faces_of_rap_rock_and_country/)
+[![Average faces of rap, rock, and country music](https://www.johnwmillr.com/assets/images/FaceAverages/Faces_RapRockCountry.png)](https://www.reddit.com/r/dataisbeautiful/comments/crxrud/the_average_faces_of_rap_rock_and_country/)
 
 ## Installation
 
