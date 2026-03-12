@@ -29,7 +29,7 @@ ffmpeg-python = "^0.2"
 tqdm = "^4"
 
 [tool.poetry.group.dev.dependencies]
-black = ">=23,<25"
+black = ">=23,<27"
 jupyterlab = "^4.3.0"
 mypy = "^1.13.0"
 flake8 = "^7.1.0"
