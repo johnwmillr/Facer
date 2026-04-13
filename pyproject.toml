@@ -33,7 +33,7 @@ black = ">=23,<27"
 jupyterlab = "^4.3.0"
 mypy = "^1.13.0"
 flake8 = "^7.1.0"
-pytest = "^8.3"
+pytest = ">=8.3,<10.0"
 
 [tool.mypy]
 # Specify the target platform details in config, so your developers are
